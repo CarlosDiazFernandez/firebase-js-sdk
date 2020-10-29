@@ -16,8 +16,9 @@
  */
 
 import { WriteBatch } from '../../../lite/src/api/write_batch';
-import { ensureFirestoreConfigured, FirebaseFirestore } from './database';
+import { FirebaseFirestore } from './database';
 import { executeWrite } from './reference';
+import { ensureFirestoreConfigured } from '../../../src/api/database';
 
 /**
  * Creates a write batch, used for performing multiple writes as a single

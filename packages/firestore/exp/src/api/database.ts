@@ -38,19 +38,21 @@ import {
 import {
   FirebaseFirestore as LiteFirestore,
   FirestoreDatabase,
-  makeDatabaseInfo,
   Settings as LiteSettings
 } from '../../../lite/src/api/database';
 import { Code, FirestoreError } from '../../../src/util/error';
 import { Deferred } from '../../../src/util/promise';
 import { LRU_MINIMUM_CACHE_SIZE_BYTES } from '../../../src/local/lru_garbage_collector';
-import { CACHE_SIZE_UNLIMITED } from '../../../src/api/database';
+import {
+  CACHE_SIZE_UNLIMITED,
+  configureFirestore,
+  ensureFirestoreConfigured
+} from '../../../src/api/database';
 import {
   indexedDbClearPersistence,
   indexedDbStoragePrefix
 } from '../../../src/local/indexeddb_persistence';
 import { PersistenceSettings } from '../../../exp-types';
-import { debugAssert } from '../../../src/util/assert';
 
 /** DOMException error code constants. */
 const DOM_EXCEPTION_INVALID_STATE = 11;
@@ -90,36 +92,6 @@ export class FirebaseFirestore
     }
     return this._firestoreClient!.terminate();
   }
-}
-
-export function ensureFirestoreConfigured(
-  firestore: FirebaseFirestore
-): FirestoreClient {
-  if (!firestore._firestoreClient) {
-    configureFirestore(firestore);
-  }
-  firestore._firestoreClient!.verifyNotTerminated();
-  return firestore._firestoreClient as FirestoreClient;
-}
-
-export function configureFirestore(firestore: FirebaseFirestore): void {
-  const settings = firestore._freezeSettings();
-  debugAssert(!!settings.host, 'FirestoreSettings.host is not set');
-  debugAssert(
-    !firestore._firestoreClient,
-    'configureFirestore() called multiple times'
-  );
-
-  const databaseInfo = makeDatabaseInfo(
-    firestore._databaseId,
-    firestore._persistenceKey,
-    settings
-  );
-  firestore._firestoreClient = new FirestoreClient(
-    firestore._credentials,
-    firestore._queue,
-    databaseInfo
-  );
 }
 
 /**

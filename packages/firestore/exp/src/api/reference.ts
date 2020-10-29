@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { ensureFirestoreConfigured, FirebaseFirestore } from './database';
+import { FirebaseFirestore } from './database';
 import {
   _DocumentKeyReference,
   ParsedUpdateData,
@@ -28,6 +28,7 @@ import { cast } from '../../../src/util/input_validation';
 import { DocumentSnapshot, QuerySnapshot } from './snapshot';
 import {
   applyFirestoreDataConverter,
+  ensureFirestoreConfigured,
   SnapshotMetadata,
   validateHasExplicitOrderByForLimitToLast
 } from '../../../src/api/database';

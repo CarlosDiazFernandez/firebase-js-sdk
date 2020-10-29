@@ -103,7 +103,7 @@ import {
   enableIndexedDbPersistence,
   enableMultiTabIndexedDbPersistence,
   enableNetwork,
-  ensureFirestoreConfigured,
+  FirebaseFirestore,
   terminate,
   waitForPendingWrites
 } from '../../exp/src/api/database';
@@ -138,7 +138,10 @@ import {
   WriteBatch as PublicWriteBatch
 } from '@firebase/firestore-types';
 import { newUserDataReader } from '../../lite/src/api/reference';
-import { FirestoreDatabase } from '../../lite/src/api/database';
+import {
+  FirestoreDatabase,
+  makeDatabaseInfo
+} from '../../lite/src/api/database';
 import { DEFAULT_HOST } from '../../lite/src/api/components';
 
 /**
@@ -391,6 +394,36 @@ export class Firestore
 
 export function setLogLevel(level: PublicLogLevel): void {
   setClientLogLevel(level);
+}
+
+export function ensureFirestoreConfigured(
+  firestore: FirebaseFirestore
+): FirestoreClient {
+  if (!firestore._firestoreClient) {
+    configureFirestore(firestore);
+  }
+  firestore._firestoreClient!.verifyNotTerminated();
+  return firestore._firestoreClient as FirestoreClient;
+}
+
+export function configureFirestore(firestore: FirebaseFirestore): void {
+  const settings = firestore._freezeSettings();
+  debugAssert(!!settings.host, 'FirestoreSettings.host is not set');
+  debugAssert(
+    !firestore._firestoreClient,
+    'configureFirestore() called multiple times'
+  );
+
+  const databaseInfo = makeDatabaseInfo(
+    firestore._databaseId,
+    firestore._persistenceKey,
+    settings
+  );
+  firestore._firestoreClient = new FirestoreClient(
+    firestore._credentials,
+    firestore._queue,
+    databaseInfo
+  );
 }
 
 /**
