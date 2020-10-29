@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { registerFirestore } from '../register';
+registerFirestore();
 /**
  * This will include all of the test files and compile them as needed
  *
@@ -24,10 +26,10 @@
 
 // 'context()' definition requires additional dependency on webpack-env package.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const integrationTestContext = (require as any).context(
+const testsContext = (require as any).context(
   '../../test/integration/api',
   true,
   /^.*\.test\.ts$/
 );
-const integrationTests = integrationTestContext.keys();
-integrationTests.forEach(integrationTestContext);
+const browserTests = testsContext.keys();
+browserTests.forEach(testsContext);

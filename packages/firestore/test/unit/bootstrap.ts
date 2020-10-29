@@ -24,12 +24,12 @@
 
 // 'context()' definition requires additional dependency on webpack-env package.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const unitTestsContext = (require as any).context(
+const testsContext = (require as any).context(
   '.',
   true,
   /^((?!node).)*\.test$/
 );
-const unitTests = unitTestsContext
+const browserTests = testsContext
   .keys()
   .filter((file: string) => !file.match(/([\/.])node([\/.])/));
-unitTests.forEach(unitTestsContext);
+browserTests.forEach(testsContext);
