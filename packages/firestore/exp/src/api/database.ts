@@ -37,22 +37,20 @@ import {
 } from '../../../src/core/component_provider';
 import {
   FirebaseFirestore as LiteFirestore,
+  FirestoreDatabase,
+  makeDatabaseInfo,
   Settings as LiteSettings
 } from '../../../lite/src/api/database';
 import { Code, FirestoreError } from '../../../src/util/error';
 import { Deferred } from '../../../src/util/promise';
 import { LRU_MINIMUM_CACHE_SIZE_BYTES } from '../../../src/local/lru_garbage_collector';
-import {
-  CACHE_SIZE_UNLIMITED,
-  configureFirestore,
-  ensureFirestoreConfigured,
-  FirestoreCompat
-} from '../../../src/api/database';
+import { CACHE_SIZE_UNLIMITED } from '../../../src/api/database';
 import {
   indexedDbClearPersistence,
   indexedDbStoragePrefix
 } from '../../../src/local/indexeddb_persistence';
 import { PersistenceSettings } from '../../../exp-types';
+import { debugAssert } from '../../../src/util/assert';
 
 /** DOMException error code constants. */
 const DOM_EXCEPTION_INVALID_STATE = 11;
@@ -70,18 +68,18 @@ export interface Settings extends LiteSettings {
  */
 export class FirebaseFirestore
   extends LiteFirestore
-  implements _FirebaseService, FirestoreCompat {
+  implements _FirebaseService {
   readonly _queue = new AsyncQueue();
   readonly _persistenceKey: string;
 
   _firestoreClient: FirestoreClient | undefined;
 
   constructor(
-    app: FirebaseApp,
+    app: FirestoreDatabase | FirebaseApp,
     authProvider: Provider<FirebaseAuthInternalName>
   ) {
     super(app, authProvider);
-    this._persistenceKey = app.name;
+    this._persistenceKey = 'name' in app ? app.name : '[DEFAULT]';
   }
 
   _terminate(): Promise<void> {
@@ -92,6 +90,36 @@ export class FirebaseFirestore
     }
     return this._firestoreClient!.terminate();
   }
+}
+
+export function ensureFirestoreConfigured(
+  firestore: FirebaseFirestore
+): FirestoreClient {
+  if (!firestore._firestoreClient) {
+    configureFirestore(firestore);
+  }
+  firestore._firestoreClient!.verifyNotTerminated();
+  return firestore._firestoreClient as FirestoreClient;
+}
+
+export function configureFirestore(firestore: FirebaseFirestore): void {
+  const settings = firestore._freezeSettings();
+  debugAssert(!!settings.host, 'FirestoreSettings.host is not set');
+  debugAssert(
+    !firestore._firestoreClient,
+    'configureFirestore() called multiple times'
+  );
+
+  const databaseInfo = makeDatabaseInfo(
+    firestore._databaseId,
+    firestore._persistenceKey,
+    settings
+  );
+  firestore._firestoreClient = new FirestoreClient(
+    firestore._credentials,
+    firestore._queue,
+    databaseInfo
+  );
 }
 
 /**
@@ -165,13 +193,13 @@ export function getFirestore(app: FirebaseApp): FirebaseFirestore {
  * @return A promise that represents successfully enabling persistent storage.
  */
 export function enableIndexedDbPersistence(
-  firestore: FirestoreCompat,
+  firestore: FirebaseFirestore,
   persistenceSettings?: PersistenceSettings
 ): Promise<void> {
   verifyNotInitialized(firestore);
 
   const client = ensureFirestoreConfigured(firestore);
-  const settings = firestore._getSettings();
+  const settings = firestore._freezeSettings();
 
   const onlineComponentProvider = new OnlineComponentProvider();
   const offlineComponentProvider = new IndexedDbOfflineComponentProvider(
@@ -209,12 +237,12 @@ export function enableIndexedDbPersistence(
  * storage.
  */
 export function enableMultiTabIndexedDbPersistence(
-  firestore: FirestoreCompat
+  firestore: FirebaseFirestore
 ): Promise<void> {
   verifyNotInitialized(firestore);
 
   const client = ensureFirestoreConfigured(firestore);
-  const settings = firestore._getSettings();
+  const settings = firestore._freezeSettings();
 
   const onlineComponentProvider = new OnlineComponentProvider();
   const offlineComponentProvider = new MultiTabOfflineComponentProvider(
@@ -322,7 +350,7 @@ function canFallbackFromIndexedDbError(
  * cleared. Otherwise, the promise is rejected with an error.
  */
 export function clearIndexedDbPersistence(
-  firestore: FirestoreCompat
+  firestore: FirebaseFirestore
 ): Promise<void> {
   if (firestore._initialized && !firestore._terminated) {
     throw new FirestoreError(
@@ -420,7 +448,7 @@ export function terminate(firestore: FirebaseFirestore): Promise<void> {
   return firestore._delete();
 }
 
-function verifyNotInitialized(firestore: FirestoreCompat): void {
+function verifyNotInitialized(firestore: FirebaseFirestore): void {
   if (firestore._initialized || firestore._terminated) {
     throw new FirestoreError(
       Code.FAILED_PRECONDITION,
