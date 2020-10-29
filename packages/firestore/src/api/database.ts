@@ -105,12 +105,13 @@ import {
   enableNetwork,
   FirebaseFirestore,
   terminate,
-  waitForPendingWrites
+  waitForPendingWrites,
+  FirebaseFirestore as ExpFirebaseFirestore
 } from '../../exp/src/api/database';
 import { onSnapshotsInSync } from '../../exp/src/api/reference';
 import { LRU_COLLECTION_DISABLED } from '../local/lru_garbage_collector';
 import { Compat } from '../compat/compat';
-import { FirebaseFirestore as ExpFirebaseFirestore } from '../../exp/src/api/database';
+
 import {
   CollectionReference as PublicCollectionReference,
   DocumentChange as PublicDocumentChange,
