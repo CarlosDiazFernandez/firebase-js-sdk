@@ -54,7 +54,7 @@ export function firestore(): Firestore {
 
 export function newTestFirestore(projectId = 'new-project'): Firestore {
   const firestoreDatabase = {
-    projectId: 'projectId',
+    projectId,
     database: '(default)'
   };
   return new Firestore(

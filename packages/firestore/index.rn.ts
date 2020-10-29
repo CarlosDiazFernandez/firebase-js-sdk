@@ -19,7 +19,7 @@ import { FirebaseNamespace } from '@firebase/app-types';
 
 import { Firestore, IndexedDbPersistenceProvider } from './src/api/database';
 import { configureForFirebase } from './src/config';
-import { FirebaseFirestore } from './exp/src/api/database';
+import { FirebaseFirestore as ExpFirebaseFirestore } from './exp/src/api/database';
 
 import './register-module';
 import { name, version } from './package.json';
@@ -34,7 +34,7 @@ export function registerFirestore(instance: FirebaseNamespace): void {
     (app, auth) =>
       new Firestore(
         app,
-        new FirebaseFirestore(app, auth),
+        new ExpFirebaseFirestore(app, auth),
         new IndexedDbPersistenceProvider()
       )
   );

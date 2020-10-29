@@ -110,7 +110,7 @@ import {
 import { onSnapshotsInSync } from '../../exp/src/api/reference';
 import { LRU_COLLECTION_DISABLED } from '../local/lru_garbage_collector';
 import { Compat } from '../compat/compat';
-import * as exp from '../../exp/index';
+import { FirebaseFirestore as ExpFirebaseFirestore } from '../../exp/src/api/database';
 import {
   CollectionReference as PublicCollectionReference,
   DocumentChange as PublicDocumentChange,
@@ -222,12 +222,12 @@ export class IndexedDbPersistenceProvider implements PersistenceProvider {
  * to the functional API of firestore-exp.
  */
 export class Firestore
-  extends Compat<exp.FirebaseFirestore>
+  extends Compat<ExpFirebaseFirestore>
   implements PublicFirestore, FirebaseService {
   _appCompat?: FirebaseApp;
   constructor(
     databaseIdOrApp: FirestoreDatabase | FirebaseApp,
-    delegate: exp.FirebaseFirestore,
+    delegate: ExpFirebaseFirestore,
     private _persistenceProvider: PersistenceProvider
   ) {
     super(delegate);
@@ -392,10 +392,6 @@ export class Firestore
   }
 }
 
-export function setLogLevel(level: PublicLogLevel): void {
-  setClientLogLevel(level);
-}
-
 export function ensureFirestoreConfigured(
   firestore: FirebaseFirestore
 ): FirestoreClient {
@@ -424,6 +420,10 @@ export function configureFirestore(firestore: FirebaseFirestore): void {
     firestore._queue,
     databaseInfo
   );
+}
+
+export function setLogLevel(level: PublicLogLevel): void {
+  setClientLogLevel(level);
 }
 
 /**
