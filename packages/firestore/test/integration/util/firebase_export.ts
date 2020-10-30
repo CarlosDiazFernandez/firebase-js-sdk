@@ -46,7 +46,7 @@ import { getFirestore } from '../../../exp/src/api/database';
  * Firestore API. Used to exclude some tests, e.g. those that validate invalid
  * TypeScript input.
  */
-export function usesFunctionalApi(): boolean {
+function usesFunctionalApi(): boolean {
   // Use the firebase namespace to detect if `firebase.firestore` has been
   // registered, which is only registered in the classic version of Firestore.
   return !('firestore' in firebase);
